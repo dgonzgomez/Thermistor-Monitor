@@ -14,7 +14,7 @@ canif.recv()
 
 class Interface:
     def __init__(self):
-        # i gotta adjust these to the actual hardware later
+        # canbus parameters
         self.bus_type = "socketcan"
         self.channel = "COM1"
         self.bitrate = 500000

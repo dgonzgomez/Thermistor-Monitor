@@ -10,25 +10,25 @@ SENSOR_IDS = {
     0x651: "S6_A", 0x652: "S6_B",
 }
 
-canif.recv()
-
 class Interface:
     def __init__(self):
-        # canbus parameters
-        self.bus_type = "socketcan"
-        self.channel = "COM1"
-        self.bitrate = 500000
-
         # initialize the bus object
-        self.bus = can.interface.Bus(
-            bustype=self.bus_type,
-            channel=self.channel,
-            bitrate=self.bitrate
+        bus = can.interface.Bus(
+            bustype="slcan",
+            channel="COM3",
+            bitrate=500000
         )
 
+        self.bus = bus
+        self.channel = "COM3"
+        self.bitrate = 500000
         print(f"Connected to the CAN bus on {self.channel} at {self.bitrate}kbps successfully!!")
 
     # receive a message from the CAN bus
     def receive(self):
         msg = self.bus.recv(timeout=1)
         return msg
+    
+    def close(self):
+        self.bus.shutdown()
+        print("CAN bus connection closed.")

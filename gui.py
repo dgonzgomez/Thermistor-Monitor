@@ -1,7 +1,7 @@
 import tkinter as tk
 import time
 from interface import Interface
-from parser import parse
+from parser import SENSOR_BUFFER, parse
 
 # gui setup
 root = tk.Tk()
@@ -34,3 +34,6 @@ def update_screen():
 # start the update loop
 root.after(100, update_screen)
 root.mainloop()
+
+# close the can bus connection on exit
+interface.close()

@@ -28,7 +28,7 @@ class Interface:
         )
 
         self.bus = bus
-        self.channel = "/dev/ttyUSB0"
+        self.channel = chan
         self.bitrate = 500000
         print(f"Connected to the CAN bus on {self.channel} at {self.bitrate}kbps successfully!!")
 

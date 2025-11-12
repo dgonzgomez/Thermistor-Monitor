@@ -1,5 +1,7 @@
 # Thermistor GUI
 
+A simple GUI application for reading some thermistor values off the CAN line.
+
 ## How to Build
 
 ### Installing Dependencies

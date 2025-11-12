@@ -6,7 +6,7 @@ A simple GUI application for reading some thermistor values off the CAN line.
 
 ### Installing Dependencies
 ```
-python -m pip install
+python -m pip install -r requirements.txt
 ```
 Will install the following from requirements.txt:
 - python-can[serial]

@@ -2,7 +2,7 @@
 
 ## How to Build
 
-## Installing Dependencies:
+### Installing Dependencies
 ```
 python -m pip install
 ```
@@ -11,7 +11,7 @@ Will install the following from requirements.txt:
 - pyserial
 - pyinstaller
 
-## Build Into Executable
+### Build Into Executable
 ```
 python -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
 ```

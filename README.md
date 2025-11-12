@@ -7,8 +7,11 @@
 python -m pip install
 ```
 Will install the following from requirements.txt:
+
 python-can[serial]
+
 pyserial
+
 pyinstaller
 
 ## Build Into Executable

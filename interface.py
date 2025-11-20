@@ -17,6 +17,8 @@ class Interface:
         
         if platform.system() == "Windows":
             chan = "COM3"
+        elif platform.system() == "Darwin":
+            chan = "/dev/tty.usbserial-DN9TMGGL"
         elif platform.system() == "Linux":
             chan = "/dev/ttyUSB0"
         

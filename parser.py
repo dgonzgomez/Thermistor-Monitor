@@ -21,28 +21,10 @@ def parse(msg):
     
     if msg_id not in ID_MAPPINGS: return
     
-    subpack_num = ID_MAPPINGS.get(msg_id, None)
+    subpack_num = ID_MAPPINGS[msg_id]
+    data = list(msg.data)
+    copy_start_range = 0 if msg_id % 2 else 6  
     
-    if sensor_id is None:
-        return None
-    
-    # split the sensor number and the part (A or B)
-    sensor_number, part = sensor_id.split("_")
-
-    # add the data to the buffer
-    SENSOR_BUFFER[sensor_number][part] = list(msg.data)
-
-    a_side = SENSOR_BUFFER[sensor_number]["A"]
-    b_side = SENSOR_BUFFER[sensor_number]["B"]
-
-    # repackage the data into a single list
-    if a_side is not None and b_side is not None:
-        new_data = a_side + b_side
-        SENSOR_BUFFER[sensor_number]["repackaged"] = new_data # not sure if this is the best way to do this
-
-        print(f"Sensor: {sensor_number} | Data: {new_data}")
-
-        # clear the buffer
-        SENSOR_BUFFER[sensor_number]["A"] = None
-        SENSOR_BUFFER[sensor_number]["B"] = None
+    for i, data in enumerate(data):
+        
 

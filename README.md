@@ -15,6 +15,6 @@ Will install the following from requirements.txt:
 
 ### Build Into Executable
 ```
-python -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+python3 -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
 ```
 Will put executable in 'dist' directory.

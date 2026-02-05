@@ -28,13 +28,9 @@ def parse(msg):
         b_side = SENSOR_BUFFER[sensor_number]["B"]
 
         # repackage the data into a single list
-        if a_side is not None and b_side is not None:
-            new_data = a_side + b_side
-            SENSOR_BUFFER[sensor_number]["repackaged"] = new_data # not sure if this is the best way to do this
+        if a_side is not None or b_side is not None:
+            new_data = (a_side or []) + (b_side or [])
+            SENSOR_BUFFER[sensor_number]["repackaged"] = new_data
 
-            print(f"Sensor: {sensor_number} | Data: {new_data}")
-
-            # clear the buffer
-            SENSOR_BUFFER[sensor_number]["A"] = None
-            SENSOR_BUFFER[sensor_number]["B"] = None
-
+            # Terminal output for debugging
+            # print(f"Sensor: {sensor_number} | Data: {new_data}")

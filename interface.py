@@ -1,6 +1,13 @@
 # talks to the CAN bus and gets the data from the sensors
 import can
 import platform
+from serial.tools import list_ports
+
+# get the list of available ports
+def get_ports():
+    ports = list_ports.comports()
+    return [port.device for port in ports]
+
 
 SENSOR_IDS = {
     0x151: "S1_A", 0x152: "S1_B",
@@ -12,31 +19,23 @@ SENSOR_IDS = {
 }
 
 class Interface:
-    def __init__(self):
-        chan = ""
-        
-        if platform.system() == "Windows":
-            chan = "COM3"
-        elif platform.system() == "Darwin":
-            chan = "/dev/tty.usbserial-DN9TMGGL"
-        elif platform.system() == "Linux":
-            chan = "/dev/ttyUSB0"
-        
+    def __init__(self, channel, bitrate=500000):
+        self.channel = channel
+        self.bitrate = bitrate
+
         # initialize the bus object
         bus = can.interface.Bus(
             bustype="slcan",
-            channel=chan,
-            bitrate=500000
+            channel=self.channel,
+            bitrate=self.bitrate
         )
 
         self.bus = bus
-        self.channel = chan
-        self.bitrate = 500000
         print(f"Connected to the CAN bus on {self.channel} at {self.bitrate}kbps successfully!!")
 
     # receive a message from the CAN bus
-    def receive(self):
-        msg = self.bus.recv(timeout=1)
+    def receive(self, timeout=1):
+        msg = self.bus.recv(timeout=timeout)
         return msg
     
     def close(self):

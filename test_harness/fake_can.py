@@ -39,7 +39,7 @@ def main():
         # Periodically send a CAN frame
         if time.time() - last_tx > 1.0:
             payload = [(counter + i) & 0xFF for i in range(8)]
-            frame = make_slcan_frame(0x123, payload)
+            frame = make_slcan_frame(0x0C0, payload)
             os.write(master_fd, frame)
             print("TX:", frame.strip())
             counter += 1

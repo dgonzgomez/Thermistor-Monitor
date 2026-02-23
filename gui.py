@@ -1,9 +1,9 @@
 import tkinter as tk
-import cantools
 from tkinter import ttk, filedialog
-from interface import get_ports
-from interface import Interface
+from interface import get_ports, Interface
 from parser import SENSOR_BUFFER, parse
+from parser import load_dbc_file
+
 from ui_style import (
     apply_styles,
     GEOMETRY,
@@ -19,8 +19,6 @@ from ui_style import (
 root = tk.Tk()
 root.title("CAN Interface")
 root.geometry(GEOMETRY)
-
-# gui styling
 apply_styles()
 
 ports = get_ports()
@@ -101,10 +99,9 @@ def load_dbc():
     if not path: # No file selected
         return
     
-    # Load DBC file
-    if cantools.database.load_file(path) is not None:
-        dbc_db = cantools.database.load_file(path)
-        dbc_text.set(f"DBC loaded: {path.split('/')[-1]}")
+    # Load DBC file if not empty
+    load_dbc_file(path)
+    dbc_text.set(f"DBC loaded: {path.split('/')[-1]}")
 
 # button calls its callback function
 connect_to_bus_button = ttk.Button(
@@ -139,12 +136,6 @@ def update_screen():
         msg = interface.receive(timeout=0)
         if msg is not None:
             parse(msg)
-            if dbc_db is not None:
-                message = dbc_db.get_message_by_frame_id(msg.arbitration_id)
-                decoded = message.decode(msg.data)
-                dbc_text.set(f"{message.name}: {decoded}")
-            else:
-                dbc_text.set("DBC: not loaded")
 
     for sensor, data in SENSOR_BUFFER.items():
         repackaged = data["repackaged"]

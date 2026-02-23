@@ -1,4 +1,6 @@
 from interface import SENSOR_IDS
+import cantools
+from pprint import pprint
 
 SENSOR_BUFFER = {
   "S1": {"A": None, "B": None, "repackaged": None},
@@ -9,8 +11,41 @@ SENSOR_BUFFER = {
   "S6": {"A": None, "B": None, "repackaged": None}
 }
 
+dbc_db = None
+
+def load_dbc_file(path):
+    global dbc_db
+    dbc_db = cantools.database.load_file(path)
+
+def dbc_decode(msg):
+    global dbc_db
+
+    if dbc_db is None:
+        return False
+
+    try:
+        message = dbc_db.get_message_by_frame_id(msg.arbitration_id)
+    except KeyError as e:
+        print(f"ID not defined in DBC: {msg.arbitration_id}")
+        return False
+
+    decoded = message.decode(msg.data)    
+    
+    for signal_id, value in decoded.items():
+        if signal_id not in SENSOR_BUFFER:
+            SENSOR_BUFFER[signal_id] = {"repackaged": None}
+
+        SENSOR_BUFFER[signal_id]["repackaged"] = value
+    return True
+
 def parse(msg):
+    # attempt to decode with DBC if available
+    if dbc_decode(msg) is not None:
+        return
+    
+    # fallback
     if msg.arbitration_id in SENSOR_IDS:
+
         # parse the message for it's sensor id and data
         can_id = msg.arbitration_id
         sensor_id = SENSOR_IDS.get(can_id, None)

@@ -1,6 +1,7 @@
 import time
 
 from interface import Interface
+import interface
 from parser import parse
 
 def main() -> None:

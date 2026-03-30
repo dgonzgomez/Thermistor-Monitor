@@ -1,5 +1,4 @@
 import cantools
-from interface import SENSOR_IDS
 from pprint import pprint
 
 SENSOR_BUFFER = {}

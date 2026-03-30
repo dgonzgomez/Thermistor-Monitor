@@ -1,13 +1,19 @@
 # talks to the CAN bus and gets the data from the sensors
+import os
+
 import can
 import platform
 from serial.tools import list_ports
 
 # get the list of available ports
 def get_ports():
-    ports = list_ports.comports()
-    return [port.device for port in ports]
+    ports = [p.device for p in list_ports.comports()] #list_ports.comports()
 
+    # testing
+    fake_port = "/tmp/ttySLCAN0"
+    if os.path.exists(fake_port):
+        ports.append(fake_port)
+    return ports #[port.device for port in ports]
 
 SENSOR_IDS = {
     0x151: "S1_A", 0x152: "S1_B",
@@ -15,7 +21,7 @@ SENSOR_IDS = {
     0x351: "S3_A", 0x352: "S3_B",
     0x451: "S4_A", 0x452: "S4_B",
     0x551: "S5_A", 0x552: "S5_B",
-    0x651: "S6_A", 0x652: "S6_B",
+    0x651: "S6_A", 0x652: "S6_B", 
 }
 
 class Interface:

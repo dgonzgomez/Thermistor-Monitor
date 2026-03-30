@@ -51,6 +51,11 @@ def main():
     counter = 0
     last_tx = time.time()
 
+    # Arbitration IDs from your DBC (must match exactly)
+    THERMISTOR_IDS = [0x31, 0x32, 0x41, 0x42, 0x51, 0x52, 0x61, 0x62]
+
+    tx_index = 0
+
     while True:
         # --- Handle incoming commands from your CAN app ---
         r, _, _ = select.select([master_fd], [], [], 0.1)
@@ -68,12 +73,18 @@ def main():
                 pass
 
         # --- Periodically transmit a CAN frame ---
-        if time.time() - last_tx > 1.0:
-            payload = [(counter + i) & 0xFF for i in range(8)]
-            frame = make_slcan_frame(0x0C0, payload)
-            os.write(master_fd, frame)
-            print("TX:", frame.strip())
+        # --- Periodically transmit CAN frames that match the DBC ---
+        if time.time() - last_tx > 0.2:  # 5 Hz per message (~realistic)
+            can_id = THERMISTOR_IDS[tx_index]
 
+            # DBC expects exactly 6 bytes
+            payload = [(counter + i) & 0xFF for i in range(6)]
+
+            frame = make_slcan_frame(can_id, payload)
+            os.write(master_fd, frame)
+            print(f"TX ID {hex(can_id)}:", frame.strip())
+
+            tx_index = (tx_index + 1) % len(THERMISTOR_IDS)
             counter += 1
             last_tx = time.time()
 

@@ -1,7 +1,7 @@
 from tkinter import ttk
 
 GEOMETRY = "1080x520"
-STATUS_COLOR = "#8bffbb"
+STATUS_COLOR = "#FF0000"
 
 PADDING = 6
 PADX = 6

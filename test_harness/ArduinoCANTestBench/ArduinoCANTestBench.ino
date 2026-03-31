@@ -20,7 +20,7 @@ const int CAN_INT_PIN = 2;
 #ifdef CAN_2515
 #include "mcp2515_can.h"
 mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
-#define MAX_DATA_SIZE 8
+#define MAX_DATA_SIZE 6
 #endif
 
 void setup() {
@@ -34,23 +34,22 @@ void setup() {
     SERIAL_PORT_MONITOR.println("CAN init ok!");
 }
 
-uint32_t id = 0x151;
+uint32_t id = 0x61;
 uint8_t  type; // bit0: ext, bit1: rtr
 unsigned len = 6;
-byte cdata[MAX_DATA_SIZE] = {0};
+byte cdata[MAX_DATA_SIZE] = {};
 
 void loop() {
-    // Sends a message of id, standard 11 bit identifier format, data length 3, and data array "cdata" 
+    // Sends a message of id, standard 11 bit identifier format, data length 6, and data array "cdata" 
+    cdata[0] = random(250);
+    cdata[1] = random(250);
+    cdata[2] = random(250);
+    cdata[3] = random(250);
+    cdata[4] = random(250);
+    cdata[5] = random(250);
     CAN.sendMsgBuf(id, 0, len, cdata);
-    cdata[0] = random(250);
-    cdata[0] = random(250);
-    cdata[0] = random(250);
-    cdata[0] = random(250);
-    cdata[0] = random(250);
-    cdata[0] = random(250);
     SERIAL_PORT_MONITOR.println(cdata[0]);
 
     unsigned d = random(30);
-    SERIAL_PORT_MONITOR.println(d);
     delay(d);
 }

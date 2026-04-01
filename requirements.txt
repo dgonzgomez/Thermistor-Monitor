@@ -2,3 +2,4 @@ python-can[serial]
 pyserial
 pyinstaller
 cantools
+customtkinter

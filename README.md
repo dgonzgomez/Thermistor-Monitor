@@ -12,6 +12,7 @@ Will install the following from requirements.txt:
 - python-can[serial]
 - pyserial
 - pyinstaller
+- customtkinter
 
 ### Build Into Executable
 ```

@@ -1,10 +1,19 @@
-import tkinter as tk
-from tkinter import ttk, filedialog
+from customtkinter import (
+    CTk,
+    CTkButton,
+    CTkCanvas,
+    CTkComboBox,
+    CTkFrame,
+    CTkLabel,
+    CTkScrollbar,
+    StringVar,
+)
+from tkinter import filedialog
+import cantools
 from interface import get_ports, Interface
-from parser import SENSOR_BUFFER, parse
-from parser import load_dbc_file
-
+from parser import SENSOR_BUFFER, parse, load_dbc_file
 from ui_style import (
+    FONTS,
     apply_styles,
     GEOMETRY,
     PADDING,
@@ -13,111 +22,119 @@ from ui_style import (
     PADY_PORTS,
     PADY_STATUS,
     STATUS_COLOR,
+    TABLE_HEADER_BG,
+    TABLE_ROW_BG,
+    TABLE_ROW_ALT_BG,
+    TABLE_BORDER,
+    TABLE_TEXT,
+    APP_BG,
 )
 
 # gui setup
-root = tk.Tk()
+root = CTk()
 root.title("CAN Interface")
 root.geometry(GEOMETRY)
+root.configure(fg_color=APP_BG)
 apply_styles()
 
 ports = get_ports()
-selected_port = tk.StringVar(value=ports[0] if ports else "No Ports Available")
-status_text = tk.StringVar(value="Disconnected")
-dbc_text = tk.StringVar(value="DBC: not loaded")
+selected_port = StringVar(value=ports[0] if ports else "No Ports Available")
+status_text = StringVar(value="Disconnected")
+dbc_text = StringVar(value="DBC: not loaded")
 dbc_db = None
+CONNECTED_COLOR = "#2ecc71"
+DISCONNECTED_COLOR = STATUS_COLOR
+DBC_LOADED_COLOR = "#2ecc71"
+DBC_UNLOADED_COLOR = STATUS_COLOR
 
-main = ttk.Frame(root, padding=PADDING)
-main.grid(row=0, column=0, sticky="nsew")
+main = CTkFrame(root, fg_color=APP_BG)
+main.grid(row=0, column=0, sticky="nsew", padx=PADDING, pady=PADDING)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
 def refresh_ports():
     ports = get_ports()
-    port_dropdown['values'] = ports
-    if ports:
-        selected_port.set(ports[0])
-    else:
-        selected_port.set("No Ports Available")
+    port_dropdown.configure(values=ports)
+    selected_port.set(ports[0] if ports else "No Ports Available")
 
-header = ttk.Label(main, text="CAN Interface", style="Header.TLabel")
+header = CTkLabel(main, text="CAN Interface", font=FONTS["header"])
 header.grid(row=0, column=0, sticky="w", pady=PADY_HEADER)
 
-ports_row = ttk.Frame(main)
+ports_row = CTkFrame(main, fg_color=APP_BG)
 ports_row.grid(row=1, column=0, sticky="w", pady=PADY_PORTS)
-ttk.Label(ports_row, text="Port").grid(row=0, column=0, sticky="w")
+CTkLabel(ports_row, text="Port").grid(row=0, column=0, sticky="w")
 
-port_dropdown = ttk.Combobox(
-    ports_row,
-    textvariable=selected_port,
-    values=ports,
-    state="readonly"
-)
+port_dropdown = CTkComboBox(ports_row, variable=selected_port, values=ports)
 port_dropdown.grid(row=0, column=1, sticky="w", padx=PADX)
 
-# create the sensor labels for the gui
-global sensor_labels 
 sensor_labels = {}
-
-# scrollable sensor container
-sensor_container = ttk.Frame(main)
+sensor_container = CTkFrame(
+    main,
+    corner_radius=10,
+    border_width=1,
+    border_color=TABLE_BORDER,
+    fg_color=APP_BG,
+)
 sensor_container.grid(row=2, column=0, sticky="nsew")
 
-canvas = tk.Canvas(sensor_container, highlightthickness=0)
-scrollbar = ttk.Scrollbar(sensor_container, orient="vertical", command=canvas.yview)
-
+canvas = CTkCanvas(sensor_container, highlightthickness=0, bg=TABLE_ROW_BG)
+scrollbar = CTkScrollbar(sensor_container, orientation="vertical", command=canvas.yview)
 canvas.configure(yscrollcommand=scrollbar.set)
-
 scrollbar.pack(side="right", fill="y")
 canvas.pack(side="left", fill="both", expand=True)
 
-# holds labels
-sensor_frame = ttk.Frame(canvas)
-canvas_window = canvas.create_window((0, 0), window=sensor_frame, anchor="nw")
+sensor_frame = CTkFrame(canvas, fg_color=TABLE_ROW_BG)
+canvas.create_window((0, 0), window=sensor_frame, anchor="nw")
 
-sensor_labels = {}
+def on_frame_configure(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
 
-# allow layout expansion
+sensor_frame.bind("<Configure>", on_frame_configure)
 main.rowconfigure(2, weight=1)
 main.columnconfigure(0, weight=1)
 
-# update scroll region automatically
-def _configure_scroll_region(event):
-    canvas.configure(scrollregion=canvas.bbox("all"))
+MAX_COLUMNS = 4
 
-sensor_frame.bind("<Configure>", _configure_scroll_region)
+header_row = CTkFrame(
+    sensor_frame, fg_color=TABLE_HEADER_BG, corner_radius=8
+)
+header_row.grid(
+    row=0, column=0, columnspan=MAX_COLUMNS * 2, sticky="ew", padx=6, pady=(6, 4)
+)
+header_row.columnconfigure(0, weight=3)
+header_row.columnconfigure(1, weight=1)
+CTkLabel(
+    header_row,
+    text="Signal",
+    font=FONTS["table_header"],
+    text_color=TABLE_TEXT,
+).grid(row=0, column=0, sticky="w", padx=8, pady=6)
+CTkLabel(
+    header_row,
+    text="Value",
+    font=FONTS["table_header"],
+    text_color=TABLE_TEXT,
+).grid(row=0, column=1, sticky="e", padx=8, pady=6)
+for col in range(MAX_COLUMNS * 2):
+    sensor_frame.columnconfigure(col, weight=3 if col % 2 == 0 else 1)
 
-# optional mouse wheel support
-def _on_mousewheel(event):
-    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-canvas.bind_all("<MouseWheel>", _on_mousewheel)
-
-# table headers
-ttk.Label(sensor_frame, text="Signal", style="Header.TLabel").grid(row=0, column=0, sticky="ew")
-ttk.Label(sensor_frame, text="Value", style="Header.TLabel").grid(row=0, column=1, sticky="ew")
-
-sensor_frame.columnconfigure(0, weight=3)
-sensor_frame.columnconfigure(1, weight=1)
-
-# delay initialization of the interface until successful connection
 interface = None
 
-# button callback to connect to the selected port on press
 def connect_to_bus():
     global interface
     selected = selected_port.get()
     if selected == "No Ports Available":
         print("No valid port selected.")
         return
-    
+
     interface = Interface(channel=selected)
     status_text.set(f"Connected: {selected}")
-
-    connect_to_bus_button.config(state=tk.DISABLED)
-    port_dropdown.config(state=tk.DISABLED)
-
-    disconnect_button.config(state=tk.NORMAL)
+    status_label.configure(text_color=CONNECTED_COLOR)
+    if dbc_db is not None:
+        dbc_label.configure(text_color=DBC_LOADED_COLOR)
+    connect_to_bus_button.configure(state="disabled")
+    port_dropdown.configure(state="disabled")
+    disconnect_button.configure(state="normal")
 
 def disconnect_from_bus():
     global interface
@@ -125,73 +142,90 @@ def disconnect_from_bus():
         interface.close()
     interface = None
     status_text.set("Disconnected")
-
-    connect_to_bus_button.config(state=tk.NORMAL)
-    port_dropdown.config(state=tk.NORMAL)
-    disconnect_button.config(state=tk.DISABLED)
+    status_label.configure(text_color=DISCONNECTED_COLOR)
+    dbc_label.configure(text_color=DBC_UNLOADED_COLOR)
+    connect_to_bus_button.configure(state="normal")
+    port_dropdown.configure(state="normal")
+    disconnect_button.configure(state="disabled")
 
 def load_dbc():
     global dbc_db
-
     path = filedialog.askopenfilename(
         title="Select DBC file",
-        filetypes=[("DBC files", "*.dbc")],
+        filetypes=[("DBC files", "*.dbc"), ("All files", "*.*")],
     )
-    if not path: # No file selected
+    if not path:
         return
-    
-    # Load DBC file if not empty
-    load_dbc_file(path)
-    dbc_text.set(f"DBC loaded: {path.split('/')[-1]}")
 
-# button calls its callback function
-connect_to_bus_button = ttk.Button(
-    ports_row,
-    text="Connect",
-    command=connect_to_bus
-)
+    try:
+        load_dbc_file(path)
+    except Exception as exc:
+        status_text.set(f"DBC load failed: {exc}")
+        return
+
+    try:
+        dbc_db = cantools.database.load_file(path)
+    except Exception as exc:
+        dbc_db = None
+        status_text.set(f"DBC load failed: {exc}")
+        return
+
+    dbc_text.set(f"DBC loaded: {path.split('/')[-1]}")
+    dbc_label.configure(text_color=DBC_LOADED_COLOR)
+
+connect_to_bus_button = CTkButton(ports_row, text="Connect", command=connect_to_bus)
 connect_to_bus_button.grid(row=0, column=2, sticky="w", padx=PADX)
 
-disconnect_button = ttk.Button(
-    ports_row,
-    text="Disconnect",
-    command=disconnect_from_bus,
-    state=tk.DISABLED
+disconnect_button = CTkButton(
+    ports_row, text="Disconnect", command=disconnect_from_bus, state="disabled"
 )
 disconnect_button.grid(row=0, column=3, sticky="w", padx=PADX)
 
-dbc_button = ttk.Button(
-    ports_row,
-    text="Load DBC",
-    command=load_dbc,
-)
+dbc_button = CTkButton(ports_row, text="Load DBC", command=load_dbc)
 dbc_button.grid(row=0, column=4, sticky="w", padx=PADX)
 
-status_label = ttk.Label(main, textvariable=status_text, foreground=STATUS_COLOR)
-status_label.grid(row=3, column=0, sticky="w", pady=PADY_STATUS)
-dbc_label = ttk.Label(main, textvariable=dbc_text, foreground=STATUS_COLOR)
-dbc_label.grid(row=4, column=0, sticky="w")
-
-refresh_button = ttk.Button(
-    ports_row,
-    text="Refresh",
-    command=refresh_ports
-)
+refresh_button = CTkButton(ports_row, text="Refresh", command=refresh_ports)
 refresh_button.grid(row=0, column=5, sticky="w", padx=PADX)
+
+status_label = CTkLabel(main, textvariable=status_text, text_color=STATUS_COLOR)
+status_label.grid(row=3, column=0, sticky="w", pady=PADY_STATUS)
+dbc_label = CTkLabel(main, textvariable=dbc_text, text_color=STATUS_COLOR)
+dbc_label.grid(row=4, column=0, sticky="w")
 
 def ensure_sensor_label(sensor_name):
     if sensor_name in sensor_labels:
         return
 
-    # offset by 1 because of header row
-    row = len(sensor_labels) + 1
+    index = len(sensor_labels)
+    row = (index // MAX_COLUMNS) + 1
+    col_base = (index % MAX_COLUMNS) * 2
+    row_color = TABLE_ROW_ALT_BG if row % 2 == 0 else TABLE_ROW_BG
+    row_frame = CTkFrame(
+        sensor_frame,
+        fg_color=row_color,
+        corner_radius=6,
+    )
+    row_frame.grid(
+        row=row, column=col_base, columnspan=2, sticky="ew", padx=6, pady=2
+    )
+    row_frame.columnconfigure(0, weight=3)
+    row_frame.columnconfigure(1, weight=1)
 
-    name_lbl = ttk.Label(sensor_frame, text=sensor_name, anchor="w")
-    name_lbl.grid(row=row, column=0, sticky="ew", padx=4, pady=1)
-
-    value_lbl = ttk.Label(sensor_frame, text="--", style="Value.TLabel", anchor="e")
-    value_lbl.grid(row=row, column=1, sticky="ew", padx=4, pady=1)
-
+    CTkLabel(
+        row_frame,
+        text=sensor_name,
+        anchor="w",
+        text_color=TABLE_TEXT,
+        font=FONTS["label"],
+    ).grid(row=0, column=0, sticky="w", padx=8, pady=4)
+    value_lbl = CTkLabel(
+        row_frame,
+        text="--",
+        font=FONTS["value"],
+        anchor="e",
+        text_color=TABLE_TEXT,
+    )
+    value_lbl.grid(row=0, column=1, sticky="e", padx=8, pady=4)
     sensor_labels[sensor_name] = value_lbl
 
 def update_screen():
@@ -203,27 +237,23 @@ def update_screen():
             parse(msg)
 
     pending_updates = []
-
     for sensor, data in SENSOR_BUFFER.items():
-        ensure_sensor_label(sensor)  # create new sensors if needed
-
+        ensure_sensor_label(sensor)
         repackaged = data["repackaged"]
         if repackaged is not None:
             pending_updates.append((sensor, repackaged))
             SENSOR_BUFFER[sensor]["repackaged"] = None
 
-    # apply UI updates in one batch
     for sensor, value in pending_updates:
-        sensor_labels[sensor].config(text=str(value))
+        sensor_labels[sensor].configure(text=str(value))
 
-    # start the update loop
     root.after(100, update_screen)
 
 def on_closing():
     if interface is not None:
         interface.close()
     root.destroy()
-    
+
 root.protocol("WM_DELETE_WINDOW", on_closing)
 update_screen()
 root.mainloop()

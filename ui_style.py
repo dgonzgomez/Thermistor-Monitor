@@ -1,40 +1,27 @@
-from tkinter import ttk
+from customtkinter import set_appearance_mode, set_default_color_theme
 
 GEOMETRY = "1080x520"
-STATUS_COLOR = "#FF0000"
+STATUS_COLOR = "#FF6B6B"
+TABLE_HEADER_BG = "#1F2937"
+TABLE_ROW_BG = "#111827"
+TABLE_ROW_ALT_BG = "#0B1220"
+TABLE_BORDER = "#374151"
+TABLE_TEXT = "#E5E7EB"
+APP_BG = "#0F172A"
 
-PADDING = 6
+PADDING = 12
 PADX = 6
 PADY_HEADER = (0, 4)
 PADY_PORTS = (0, 4)
 PADY_STATUS = (4, 0)
 
 FONTS = {
-    "TLabel": ("Helvetica", 11),
-
-    "Value.TLabel": ("Menlo", 11),
-
-    "Header.TLabel": ("Helvetica", 12, "bold"),
+    "label": ("Helvetica", 11),
+    "value": ("Menlo", 11),
+    "header": ("Helvetica", 12, "bold"),
+    "table_header": ("Helvetica", 11, "bold"),
 }
 
 def apply_styles():
-    style = ttk.Style()
-    style.theme_use("clam")
-
-    for name, font in FONTS.items():
-        style.configure(name, font=font)
-
-    # Row styling
-    style.configure("TLabel", padding=(2, 1))
-    style.configure("Value.TLabel", padding=(2, 1))
-
-    style.configure("Value.TLabel", anchor="e")  # right-align values
-
-    # Header styling
-    style.configure("Header.TLabel", padding=(2, 2))
-
-    # Scrollbar styling
-    style.configure("Vertical.TScrollbar", gripcount=0, arrowsize=10)
-
-    style.configure("TButton", padding=(6, 2))
-    style.configure("TCombobox", padding=(4, 2))
+    set_appearance_mode("dark")
+    set_default_color_theme("green")

@@ -1,11 +1,9 @@
 /* This code is heavily based off of the SEEED Studio library send_random.ino example.
-* For a multi-ID temperature test bench, see ArduinoCANTestBench_Multi.ino.
-
-* It sends mapped analog data captured from a potentiometer and a joystick to simulate
-* actual data captured from UCR's Highlander Racing FSAE team's VCU.
-* This data is then captured by a dashboard programming running from an STM32F7 discovery board.
 *
-* Author: Justin Im, Emad, and Diego
+* It sends multiple CAN frames that match the IDs in test_harness/test.dbc.
+* Each frame contains 6 temperature values (one byte each).
+*
+* Author: Justin Im, Emad Saadat, and Diego Gonzalez Gomez
 */
 
 #include <SPI.h>
@@ -24,6 +22,9 @@ mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
 #define MAX_DATA_SIZE 6
 #endif
 
+const uint32_t TEMP_IDS[] = {49, 50, 65, 66, 81, 82, 97, 98};
+const size_t TEMP_ID_COUNT = sizeof(TEMP_IDS) / sizeof(TEMP_IDS[0]);
+
 void setup() {
     SERIAL_PORT_MONITOR.begin(115200);
     while (!SERIAL_PORT_MONITOR) {}
@@ -35,21 +36,28 @@ void setup() {
     SERIAL_PORT_MONITOR.println("CAN init ok!");
 }
 
-uint32_t id = 0x61;
-uint8_t  type; // bit0: ext, bit1: rtr
-unsigned len = 6;
+uint8_t type; // bit0: ext, bit1: rtr
+unsigned len = MAX_DATA_SIZE;
 byte cdata[MAX_DATA_SIZE] = {};
 
-void loop() {
-    // Sends a message of id, standard 11 bit identifier format, data length 6, and data array "cdata" 
-    cdata[0] = random(250);
-    cdata[1] = random(250);
-    cdata[2] = random(250);
-    cdata[3] = random(250);
-    cdata[4] = random(250);
-    cdata[5] = random(250);
+void sendTemps(uint32_t id) {
+    // Populate 6 temperature bytes
+    for (int i = 0; i < MAX_DATA_SIZE; i++) {
+        cdata[i] = random(20, 90); // 20-89 degC
+    }
+
     CAN.sendMsgBuf(id, 0, len, cdata);
+    SERIAL_PORT_MONITOR.print("ID ");
+    SERIAL_PORT_MONITOR.print(id, HEX);
+    SERIAL_PORT_MONITOR.print(" -> ");
     SERIAL_PORT_MONITOR.println(cdata[0]);
+}
+
+void loop() {
+    for (size_t i = 0; i < TEMP_ID_COUNT; i++) {
+        sendTemps(TEMP_IDS[i]);
+        delay(5);
+    }
 
     unsigned d = random(30);
     delay(d);

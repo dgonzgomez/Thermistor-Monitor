@@ -1,7 +1,7 @@
 import cantools
-from pprint import pprint
 
 SENSOR_BUFFER = {}
+dbc_db = None
 
 def load_dbc_file(path):
     global dbc_db
@@ -17,7 +17,7 @@ def dbc_decode(msg):
         print(f"ID not defined in DBC: {msg.arbitration_id}")
         return False
 
-    decoded = message.decode(msg.data)    
+    decoded = message.decode(msg.data)
     
     for signal_id, value in decoded.items():
         full_signal_name = f"{message.name}.{signal_id}"

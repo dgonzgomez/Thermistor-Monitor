@@ -52,11 +52,7 @@ main.grid(row=0, column=0, sticky="nsew", padx=PADDING, pady=PADDING)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-def refresh_ports():
-    ports = get_ports()
-    port_dropdown.configure(values=ports)
-    selected_port.set(ports[0] if ports else "No Ports Available")
-
+# gui header layout 
 header = CTkLabel(main, text="CAN Interface", font=FONTS["header"])
 header.grid(row=0, column=0, sticky="w", pady=PADY_HEADER)
 
@@ -67,6 +63,7 @@ CTkLabel(ports_row, text="Port").grid(row=0, column=0, sticky="w")
 port_dropdown = CTkComboBox(ports_row, variable=selected_port, values=ports)
 port_dropdown.grid(row=0, column=1, sticky="w", padx=PADX)
 
+# sensor display layout
 sensor_labels = {}
 sensor_container = CTkFrame(
     main,
@@ -93,8 +90,11 @@ sensor_frame.bind("<Configure>", on_frame_configure)
 main.rowconfigure(2, weight=1)
 main.columnconfigure(0, weight=1)
 
+# edit this if you want more columns in the spread sheet
+# maybe we can tie this to a setting it should be easy, not sure if it's necessary
 MAX_COLUMNS = 4
 
+# table setup
 header_row = CTkFrame(
     sensor_frame, fg_color=TABLE_HEADER_BG, corner_radius=8
 )
@@ -119,6 +119,12 @@ for col in range(MAX_COLUMNS * 2):
     sensor_frame.columnconfigure(col, weight=3 if col % 2 == 0 else 1)
 
 interface = None
+
+# helper functions for button commands
+def refresh_ports():
+    ports = get_ports()
+    port_dropdown.configure(values=ports)
+    selected_port.set(ports[0] if ports else "No Ports Available")
 
 def connect_to_bus():
     global interface
@@ -156,13 +162,14 @@ def load_dbc():
     )
     if not path:
         return
-
+    # try loading the DBC into the parser before updating GUI
     try:
         load_dbc_file(path)
     except Exception as exc:
+        # let's in the future have this displayed in the GUI
         status_text.set(f"DBC load failed: {exc}")
         return
-
+    # try loading the DBC file into the cantools database
     try:
         dbc_db = cantools.database.load_file(path)
     except Exception as exc:
@@ -173,6 +180,7 @@ def load_dbc():
     dbc_text.set(f"DBC loaded: {path.split('/')[-1]}")
     dbc_label.configure(text_color=DBC_LOADED_COLOR)
 
+# actual setup of button styling
 connect_to_bus_button = CTkButton(ports_row, text="Connect", command=connect_to_bus)
 connect_to_bus_button.grid(row=0, column=2, sticky="w", padx=PADX)
 
@@ -192,13 +200,18 @@ status_label.grid(row=3, column=0, sticky="w", pady=PADY_STATUS)
 dbc_label = CTkLabel(main, textvariable=dbc_text, text_color=STATUS_COLOR)
 dbc_label.grid(row=4, column=0, sticky="w")
 
+# process the incoming messages and put them into a table
 def ensure_sensor_label(sensor_name):
+    # does not update if the label already exists
+    # only creates a new label if the sensor is new
     if sensor_name in sensor_labels:
         return
 
     index = len(sensor_labels)
     row = (index // MAX_COLUMNS) + 1
     col_base = (index % MAX_COLUMNS) * 2
+
+    # styling
     row_color = TABLE_ROW_ALT_BG if row % 2 == 0 else TABLE_ROW_BG
     row_frame = CTkFrame(
         sensor_frame,
@@ -226,8 +239,10 @@ def ensure_sensor_label(sensor_name):
         text_color=TABLE_TEXT,
     )
     value_lbl.grid(row=0, column=1, sticky="e", padx=8, pady=4)
+
     sensor_labels[sensor_name] = value_lbl
 
+# the meat of the program
 def update_screen():
     if interface is not None:
         while True:
@@ -236,6 +251,7 @@ def update_screen():
                 break
             parse(msg)
 
+    # store the new data in a buffer
     pending_updates = []
     for sensor, data in SENSOR_BUFFER.items():
         ensure_sensor_label(sensor)
@@ -244,6 +260,7 @@ def update_screen():
             pending_updates.append((sensor, repackaged))
             SENSOR_BUFFER[sensor]["repackaged"] = None
 
+    # update the labels in the GUI for all the sensors that have new data
     for sensor, value in pending_updates:
         sensor_labels[sensor].configure(text=str(value))
 

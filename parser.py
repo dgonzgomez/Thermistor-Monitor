@@ -23,12 +23,11 @@ def dbc_decode(msg):
         full_signal_name = f"{message.name}.{signal_id}"
 
         if full_signal_name not in SENSOR_BUFFER:
-            SENSOR_BUFFER[full_signal_name] = {"repackaged": None}
+            SENSOR_BUFFER[full_signal_name] = {"id": None, "repackaged": None}
             
         SENSOR_BUFFER[full_signal_name]["repackaged"] = value
+        SENSOR_BUFFER[full_signal_name]["id"] = int(msg.arbitration_id)
     return True
 
 def parse(msg):
-    # attempt to decode with DBC if available
-    if dbc_decode(msg):
-        return
+    dbc_decode(msg)

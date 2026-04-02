@@ -1,6 +1,5 @@
 # talks to the CAN bus and gets the data from the sensors
 import os
-
 import can
 import platform
 from serial.tools import list_ports

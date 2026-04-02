@@ -5,6 +5,7 @@ from customtkinter import (
     CTkComboBox,
     CTkFrame,
     CTkLabel,
+    CTkEntry,
     CTkScrollbar,
     StringVar,
 )
@@ -195,6 +196,10 @@ dbc_button.grid(row=0, column=4, sticky="w", padx=PADX)
 refresh_button = CTkButton(ports_row, text="Refresh", command=refresh_ports)
 refresh_button.grid(row=0, column=5, sticky="w", padx=PADX)
 
+search_ids = []
+search_box = CTkEntry(ports_row, placeholder_text="Enter a CANID")
+search_box.grid(row=0, column=6, sticky="w", padx=PADX)
+
 status_label = CTkLabel(main, textvariable=status_text, text_color=STATUS_COLOR)
 status_label.grid(row=3, column=0, sticky="w", pady=PADY_STATUS)
 dbc_label = CTkLabel(main, textvariable=dbc_text, text_color=STATUS_COLOR)
@@ -224,13 +229,14 @@ def ensure_sensor_label(sensor_name):
     row_frame.columnconfigure(0, weight=3)
     row_frame.columnconfigure(1, weight=1)
 
-    CTkLabel(
+    name_lbl = CTkLabel(
         row_frame,
         text=sensor_name,
         anchor="w",
         text_color=TABLE_TEXT,
         font=FONTS["label"],
-    ).grid(row=0, column=0, sticky="w", padx=8, pady=4)
+    )
+    name_lbl.grid(row=0, column=0, sticky="w", padx=8, pady=4)
     value_lbl = CTkLabel(
         row_frame,
         text="--",
@@ -240,7 +246,29 @@ def ensure_sensor_label(sensor_name):
     )
     value_lbl.grid(row=0, column=1, sticky="e", padx=8, pady=4)
 
-    sensor_labels[sensor_name] = value_lbl
+    sensor_labels[sensor_name] = {"name": name_lbl, "value": value_lbl}
+
+def delete_sensor_label(sname):
+    if sname in sensor_labels:
+        sensor_labels[sname]["name"].grid_forget()
+        sensor_labels[sname]["value"].grid_forget()
+        del sensor_labels[sname]
+    
+# Returns true if the given ID is not currently in the search
+def in_search(id):
+    if not search_ids:
+        return True
+    return id in search_ids
+    
+def update_search():
+    global search_ids
+    global search_box
+    text = search_box.get()
+    
+    try:
+        search_ids = [int(term, 0) for term in text.split(',')]
+    except:
+        search_ids = []
 
 # the meat of the program
 def update_screen():
@@ -250,10 +278,15 @@ def update_screen():
             if msg is None:
                 break
             parse(msg)
-
+    
+    update_search()
+    
     # store the new data in a buffer
     pending_updates = []
     for sensor, data in SENSOR_BUFFER.items():
+        if (not in_search(data["id"])):
+            delete_sensor_label(sensor)
+            continue
         ensure_sensor_label(sensor)
         repackaged = data["repackaged"]
         if repackaged is not None:
@@ -262,7 +295,7 @@ def update_screen():
 
     # update the labels in the GUI for all the sensors that have new data
     for sensor, value in pending_updates:
-        sensor_labels[sensor].configure(text=str(value))
+        sensor_labels[sensor]["value"].configure(text=str(value))
 
     root.after(100, update_screen)
 

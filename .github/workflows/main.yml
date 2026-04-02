@@ -1,0 +1,62 @@
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    
+    - name: Build
+      run: python -m pip install -r requirements.txt && python3 -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+    
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        draft: true
+        working_directory: dist
+        files: gui.exe
+
+  build-macos:
+    needs: build-windows
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    
+    - name: Build
+      run: python -m pip install -r requirements.txt && python3 -m PyInstaller --target-arch universal2 --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+    
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        draft: true
+        working_directory: dist
+        files: gui.app
+
+  build-linux:
+    needs: build-macos
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    
+    - name: Build
+      run: python -m pip install -r requirements.txt && python3 -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+    
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        draft: false
+        working_directory: dist
+        files: gui

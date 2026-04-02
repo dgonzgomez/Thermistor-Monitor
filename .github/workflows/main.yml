@@ -30,14 +30,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v6
-      
-    - name: Install Fat Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.12'
 
     - name: Build
-      run: python -m pip install -r requirements.txt && python -m PyInstaller --target-arch universal2 --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+      run: python -m pip install -r requirements.txt && python -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
     
     - name: Release
       uses: softprops/action-gh-release@v2

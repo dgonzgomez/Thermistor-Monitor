@@ -18,6 +18,8 @@ jobs:
     
     - name: Release
       uses: softprops/action-gh-release@v2
+      permissions:
+        contents: write
       with:
         draft: true
         working_directory: dist
@@ -36,6 +38,8 @@ jobs:
     
     - name: Release
       uses: softprops/action-gh-release@v2
+      permissions:
+        contents: write
       with:
         draft: true
         working_directory: dist
@@ -54,6 +58,8 @@ jobs:
     
     - name: Release
       uses: softprops/action-gh-release@v2
+      permissions:
+        contents: write
       with:
         draft: false
         working_directory: dist

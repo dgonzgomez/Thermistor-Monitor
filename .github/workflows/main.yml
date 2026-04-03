@@ -17,14 +17,14 @@ jobs:
       uses: actions/checkout@v6
     
     - name: Build
-      run: python -m pip install -r requirements.txt && python -m PyInstaller --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+      run: python -m pip install -r requirements.txt && python -m PyInstaller --name CANViewer --onefile --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
     
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         draft: true
         working_directory: dist
-        files: gui.exe
+        files: CANViewer.exe
 
   build-macos:
     needs: build-windows
@@ -35,29 +35,35 @@ jobs:
       uses: actions/checkout@v6
 
     - name: Build
-      run: python -m pip install -r requirements.txt && python -m PyInstaller --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial && ls -la dist
+      run: python -m pip install -r requirements.txt && python -m PyInstaller --name CANViewer --windowed gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
     
+    - name: Zip Up App
+      run: zip -r CANViewer.zip dist/CANViewer.app
+      
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         draft: true
         working_directory: dist
-        files: gui.app
+        files: CANViewer.zip
 
   build-linux:
     needs: build-macos
     runs-on: ubuntu-latest
     
     steps:
+    - name: Install Tkinter
+      run: sudo apt install python3-tk
+      
     - name: Checkout
       uses: actions/checkout@v6
     
     - name: Build
-      run: python -m pip install -r requirements.txt && python -m PyInstaller --onefile gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
+      run: python -m pip install -r requirements.txt && python -m PyInstaller --name CANViewer --onefile gui.py --hidden-import=can.interfaces.slcan --hidden-import=can.interfaces.serial --hidden-import=serial
     
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         draft: false
         working_directory: dist
-        files: gui
+        files: CANViewer

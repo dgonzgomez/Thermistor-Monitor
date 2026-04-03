@@ -8,8 +8,8 @@ from customtkinter import (
     CTkEntry,
     CTkScrollbar,
     StringVar,
+    filedialog
 )
-from tkinter import filedialog
 import cantools
 from interface import get_ports, Interface
 from parser import SENSOR_BUFFER, parse, load_dbc_file

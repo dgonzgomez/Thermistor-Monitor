@@ -9,8 +9,11 @@ def load_dbc_file(path):
 
 def dbc_decode(msg):
     if dbc_db is None:
-        return False
-
+        key = f"0x{msg.arbitration_id:03X}"
+        if key not in SENSOR_BUFFER:
+            SENSOR_BUFFER[key] = {"id": msg.arbitration_id, "repackaged": None}
+        SENSOR_BUFFER[key]["repackaged"] = list(msg.data)
+        return True
     try:
         message = dbc_db.get_message_by_frame_id(msg.arbitration_id)
     except KeyError as e:
@@ -30,4 +33,5 @@ def dbc_decode(msg):
     return True
 
 def parse(msg):
+
     dbc_decode(msg)

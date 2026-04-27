@@ -12,6 +12,7 @@ from customtkinter import (
 )
 import cantools
 from interface import get_ports, Interface
+import bus_health
 from parser import SENSOR_BUFFER, parse, load_dbc_file
 from ui_style import (
     FONTS,
@@ -135,6 +136,7 @@ def connect_to_bus():
         return
 
     interface = Interface(channel=selected)
+    bus_health.start()
     status_text.set(f"Connected: {selected}")
     status_label.configure(text_color=CONNECTED_COLOR)
     if dbc_db is not None:
@@ -196,9 +198,12 @@ dbc_button.grid(row=0, column=4, sticky="w", padx=PADX)
 refresh_button = CTkButton(ports_row, text="Refresh", command=refresh_ports)
 refresh_button.grid(row=0, column=5, sticky="w", padx=PADX)
 
+health_button = CTkButton(ports_row, text="Bus Health", command=bus_health.show_bus_health)
+health_button.grid(row=0, column=6, sticky="w", padx=PADX)
+
 search_ids = []
 search_box = CTkEntry(ports_row, placeholder_text="Enter a CANID")
-search_box.grid(row=0, column=6, sticky="w", padx=PADX)
+search_box.grid(row=0, column=7, sticky="w", padx=PADX)
 
 status_label = CTkLabel(main, textvariable=status_text, text_color=STATUS_COLOR)
 status_label.grid(row=3, column=0, sticky="w", pady=PADY_STATUS)
@@ -278,6 +283,7 @@ def update_screen():
             if msg is None:
                 break
             parse(msg)
+            bus_health.log_frame(msg)
     
     update_search()
     
